@@ -1,0 +1,98 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8">
+		<title>Title</title>
+		<script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+		<!-- Latest compiled and minified CSS -->
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+		<!-- Latest compiled and minified JavaScript -->
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+	</head>
+	<script>
+	$(function(){
+		$('.file').change(function(){
+			$('#container').empty().prop('disabled', true);
+			
+			var files = this.files; // FileList object
+			
+			var str = '';
+			var job = 0;
+			// Loop through the FileList
+			for(var i = 0, f; f = files[i]; i++){
+				job++;
+			
+				var reader = new FileReader();
+				reader.onload = function(ev){
+					// NOTE: event.target point to FileReader
+					var contents = ev.target.result;
+					//////
+					str += contents;
+					job--;
+				};
+				reader.readAsText(f);
+			}
+			
+			var interval = setInterval(function(){
+			
+				if(job == 0){
+					clearInterval(interval);
+					
+					var row = str.split('\n');
+					console.log(row);
+					run(row);
+				}
+				
+			}, 1000);
+		});
+		
+		function run(row){
+			//read format file
+			$('#data').load('./' + $('[name=type]').val(), '', function(){
+				var format = [];
+				var arr = $('#data').text().split('\n');
+				for(var i in arr){
+					format.push(arr[i].split(' '));
+				}
+				
+				//try parsing rows
+				var result = [];
+				for(var j in row){
+					//remove empty lines
+					if(row[j] == ''){
+						continue;
+					}
+				
+					var tmp = [];
+					for(var i in format){
+						tmp.push( row[j].substr(format[i][5]-1, format[i][4]) );
+					}
+					result.push(tmp.join(','));
+				}
+				
+				//console.log(result);
+				$('#container').text(result.join('\n'));
+				$('#container').prop('disabled', false);
+			});
+		}
+	});
+	</script>
+	<style>
+	html, body, .container{
+		height: 100%
+	}
+	</style>
+	<body>
+		<div class="container">
+			<div class="input-group">
+				<span class="input-group-addon">Format</span>
+				<select class="form-control" name="type" style="width: 100px">
+					<option value="DD8592">DD8592</option>
+				</select>
+				<input class="form-control file" type="file" name="files[]" multiple style="width: 100px">
+			</div>
+			<input type="hidden" id="data">
+			<textarea class="form-control" id="container" style="height: calc(100% - 50px)" placeholder="Results"></textarea>
+		</div>
+	</body>
+</html>
